@@ -1,7 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <title>hello world!</title>
+<head>
+    <meta charset="UTF-8">
+    <title>Hello World Interactive Homepage</title>
+    <link rel="stylesheet" href="menu.css">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+        body {
+            width: 100vw;
+            height: 100vh;
+        }
+        #hello {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-weight: bold;
+            color: #0074D9; /* Primary blue */
+            background: rgba(37, 255, 109, 0.85);
+            border-radius: 24px;
+            padding: 32px 64px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            cursor: pointer;
+            z-index: 10;
+            user-select: none;
+            transition: color 0.3s, background 0.3s, transform 0.2s;
+        }
+        #hello.active {
+            color: #FF4136; /* Primary red */
+            background: #FFDC00; /* Primary yellow */
+            transform: translate(-50%, -50%) scale(1.08) rotate(-2deg);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+        }
+        canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bg"></canvas>
+    <div id="hello" class="h1">Hello World</div>
+    <script>
+        // Interactive animated background with bouncing balls in primary colours
+        const canvas = document.getElementById('bg');
+        const ctx = canvas.getContext('2d');
+        let W = window.innerWidth, H = window.innerHeight;
+        canvas.width = W;
+        canvas.height = H;
 
-  </head>
+        function resizeCanvas() {
+            W = window.innerWidth;
+            H = window.innerHeight;
+            canvas.width = W;
+            canvas.height = H;
+        }
+        window.addEventListener('resize', resizeCanvas);
 
+        // Ball animation
+        const primaryColors = ['#FF4136', '#0074D9', '#FFDC00']; // red, blue, yellow
+        function randomColor() {
+            return primaryColors[Math.floor(Math.random() * primaryColors.length)];
+        }
+        function randomBetween(a, b) {
+            return a + Math.random() * (b - a);
+        }
+        class Ball {
+            constructor() {
+                this.r = randomBetween(18, 38);
+                this.x = randomBetween(this.r, W - this.r);
+                this.y = randomBetween(this.r, H - this.r);
+                this.dx = randomBetween(-2, 2);
+                this.dy = randomBetween(-2, 2);
+                this.color = randomColor();
+                this.alpha = randomBetween(0.5, 0.9);
+            }
+            move() {
+                this.x += this.dx;
+                this.y += this.dy;
+                if (this.x < this.r || this.x > W - this.r) this.dx *= -1;
+                if (this.y < this.r || this.y > H - this.r) this.dy *= -1;
+            }
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+                ctx.fillStyle = this.color;
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 16;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+        let balls = [];
+        for (let i = 0; i < 18; i++) balls.push(new Ball());
+
+        function animate() {
+            ctx.clearRect(0, 0, W, H);
+            balls.forEach(ball => {
+                ball.move();
+                ball.draw(ctx);
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // Add balls on click
+        canvas.addEventListener('click', e => {
+            for (let i = 0; i < 3; i++) balls.push(new Ball());
+        });
+
+        // Interactive "Hello World" text
+        const hello = document.getElementById('hello');
+        let isDragging = false, offsetX = 0, offsetY = 0;
+
+        hello.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            offsetX = e.clientX - hello.offsetLeft;
+            offsetY = e.clientY - hello.offsetTop;
+            hello.classList.add('active');
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                hello.style.left = (e.clientX - offsetX) + 'px';
+                hello.style.top = (e.clientY - offsetY) + 'px';
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            hello.classList.remove('active');
+        });
+
+        // Animate text on hover/click
+        hello.addEventListener('mouseenter', () => hello.classList.add('active'));
+        hello.addEventListener('mouseleave', () => hello.classList.remove('active'));
+        hello.addEventListener('click', () => {
+            // Burst effect: add a bunch of balls
+            for (let i = 0; i < 8; i++) balls.push(new Ball());
+        });
+    </script>
+</body>
+</html>
