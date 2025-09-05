@@ -2,149 +2,114 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Hello World with Flying Cats</title>
-    <link rel="stylesheet" href="menu.css">
+    <title>Interactive Hello World</title>
     <style>
-        html, body {
+        body {
             margin: 0;
-            padding: 0;
-            overflow: hidden;
-            width: 100vw;
             height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 2s ease;
         }
+
         #hello {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 4rem;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            font-weight: bold;
-            color: #0074D9;
-            background: rgba(37, 255, 109, 0.85);
-            border-radius: 24px;
-            padding: 32px 64px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            font-size: 5rem;
+            font-family: 'Arial', sans-serif;
+            color: white;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
             cursor: pointer;
-            z-index: 10;
-            user-select: none;
-            transition: all 0.3s;
+            transition: transform 0.3s ease;
+            z-index: 100;
+            background: rgba(255,255,255,0.1);
+            padding: 20px 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
         }
+
         #hello:hover {
-            transform: translate(-50%, -50%) scale(1.1);
-            background: rgba(255, 220, 0, 0.9);
+            transform: scale(1.1) rotate(5deg);
         }
+
         .cat {
             position: absolute;
-            width: 50px;
-            height: 50px;
+            font-size: 50px;
+            user-select: none;
             pointer-events: none;
-            z-index: 5;
-            transition: transform 0.3s;
-        }
-        canvas {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
         }
     </style>
 </head>
 <body>
-    <canvas id="bg"></canvas>
-    <div id="hello" class="h1">Hello World!</div>
-    <script>
-        // Keep existing canvas and ball code
-        // ...existing code...
+    <div id="hello">Hello World</div>
 
-        // Add cat animation code
-        const catEmoji = "🐱";
-        const cats = [];
+    <script>
+        // Color changing background
+        function randomColor() {
+            return `hsl(${Math.random() * 360}, 70%, 70%)`;
+        }
+
+        function changeBackground() {
+            document.body.style.backgroundColor = randomColor();
+        }
         
+        setInterval(changeBackground, 3000);
+        changeBackground(); // Initial color
+
+        // Cat animation
         class Cat {
             constructor() {
                 this.element = document.createElement('div');
                 this.element.className = 'cat';
-                this.element.textContent = catEmoji;
-                this.element.style.fontSize = '40px';
+                this.element.textContent = '🐱';
                 this.x = Math.random() * window.innerWidth;
                 this.y = Math.random() * window.innerHeight;
-                this.speedX = (Math.random() - 0.5) * 4;
-                this.speedY = (Math.random() - 0.5) * 4;
+                this.speedX = (Math.random() - 0.5) * 5;
+                this.speedY = (Math.random() - 0.5) * 5;
                 this.rotation = 0;
-                this.element.style.left = this.x + 'px';
-                this.element.style.top = this.y + 'px';
+                this.rotationSpeed = (Math.random() - 0.5) * 8;
                 document.body.appendChild(this.element);
+                this.update();
             }
 
             update() {
                 this.x += this.speedX;
                 this.y += this.speedY;
-                this.rotation += 2;
+                this.rotation += this.rotationSpeed;
 
-                // Bounce off edges
-                if (this.x <= 0 || this.x >= window.innerWidth - 50) this.speedX *= -1;
-                if (this.y <= 0 || this.y >= window.innerHeight - 50) this.speedY *= -1;
+                // Bounce off walls
+                if (this.x < 0 || this.x > window.innerWidth - 50) {
+                    this.speedX *= -1;
+                    this.rotationSpeed = (Math.random() - 0.5) * 8;
+                }
+                if (this.y < 0 || this.y > window.innerHeight - 50) {
+                    this.speedY *= -1;
+                    this.rotationSpeed = (Math.random() - 0.5) * 8;
+                }
 
-                this.element.style.left = this.x + 'px';
-                this.element.style.top = this.y + 'px';
-                this.element.style.transform = `rotate(${this.rotation}deg)`;
+                this.element.style.transform = `translate(${this.x}px, ${this.y}px) rotate(${this.rotation}deg)`;
+                requestAnimationFrame(() => this.update());
             }
         }
 
         // Create initial cats
-        for (let i = 0; i < 10; i++) {
-            cats.push(new Cat());
-        }
-
-        // Update animation loop to include cats
-        function animate() {
-            ctx.clearRect(0, 0, W, H);
-            
-            // Update balls
-            balls.forEach(ball => {
-                ball.move();
-                ball.draw(ctx);
-            });
-
-            // Update cats
-            cats.forEach(cat => cat.update());
-            
-            requestAnimationFrame(animate);
-        }
-
-        // Modify click handler to add cats too
-        hello.addEventListener('click', () => {
-            for (let i = 0; i < 3; i++) {
-                balls.push(new Ball());
-                cats.push(new Cat());
-            }
-        });
+        const cats = Array.from({length: 8}, () => new Cat());
 
         // Make hello text draggable
         const hello = document.getElementById('hello');
         let isDragging = false;
-        let currentX;
-        let currentY;
-        let initialX;
-        let initialY;
-        let xOffset = 0;
-        let yOffset = 0;
+        let currentX = 0, currentY = 0;
+        let initialX = 0, initialY = 0;
+        let xOffset = 0, yOffset = 0;
 
-        hello.addEventListener('mousedown', dragStart);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', dragEnd);
-
-        function dragStart(e) {
+        hello.addEventListener('mousedown', e => {
             initialX = e.clientX - xOffset;
             initialY = e.clientY - yOffset;
-            if (e.target === hello) {
-                isDragging = true;
-            }
-        }
+            isDragging = true;
+        });
 
-        function drag(e) {
+        document.addEventListener('mousemove', e => {
             if (isDragging) {
                 e.preventDefault();
                 currentX = e.clientX - initialX;
@@ -153,16 +118,22 @@
                 yOffset = currentY;
                 hello.style.transform = `translate(${currentX}px, ${currentY}px)`;
             }
-        }
+        });
 
-        function dragEnd(e) {
-            initialX = currentX;
-            initialY = currentY;
+        document.addEventListener('mouseup', () => {
             isDragging = false;
-        }
+        });
 
-        // Start the animation
-        animate();
+        // Add more cats on click
+        hello.addEventListener('click', () => {
+            for (let i = 0; i < 3; i++) {
+                new Cat();
+            }
+            hello.style.transform = `translate(${currentX}px, ${currentY}px) scale(1.2)`;
+            setTimeout(() => {
+                hello.style.transform = `translate(${currentX}px, ${currentY}px) scale(1)`;
+            }, 200);
+        });
     </script>
 </body>
 </html>
