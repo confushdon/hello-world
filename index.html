@@ -2,17 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Hello World Interactive Homepage</title>
+    <title>Hello World with Flying Cats</title>
     <link rel="stylesheet" href="menu.css">
     <style>
         html, body {
             margin: 0;
             padding: 0;
             overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-        }
-        body {
             width: 100vw;
             height: 100vh;
         }
@@ -24,7 +20,7 @@
             font-size: 4rem;
             font-family: 'Segoe UI', Arial, sans-serif;
             font-weight: bold;
-            color: #0074D9; /* Primary blue */
+            color: #0074D9;
             background: rgba(37, 255, 109, 0.85);
             border-radius: 24px;
             padding: 32px 64px;
@@ -32,13 +28,19 @@
             cursor: pointer;
             z-index: 10;
             user-select: none;
-            transition: color 0.3s, background 0.3s, transform 0.2s;
+            transition: all 0.3s;
         }
-        #hello.active {
-            color: #FF4136; /* Primary red */
-            background: #FFDC00; /* Primary yellow */
-            transform: translate(-50%, -50%) scale(1.08) rotate(-2deg);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+        #hello:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            background: rgba(255, 220, 0, 0.9);
+        }
+        .cat {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            pointer-events: none;
+            z-index: 5;
+            transition: transform 0.3s;
         }
         canvas {
             position: absolute;
@@ -46,113 +48,121 @@
             width: 100vw;
             height: 100vh;
             z-index: 1;
-            display: block;
         }
     </style>
 </head>
 <body>
     <canvas id="bg"></canvas>
-    <div id="hello" class="h1">Hello World</div>
+    <div id="hello" class="h1">Hello World!</div>
     <script>
-        // Interactive animated background with bouncing balls in primary colours
-        const canvas = document.getElementById('bg');
-        const ctx = canvas.getContext('2d');
-        let W = window.innerWidth, H = window.innerHeight;
-        canvas.width = W;
-        canvas.height = H;
+        // Keep existing canvas and ball code
+        // ...existing code...
 
-        function resizeCanvas() {
-            W = window.innerWidth;
-            H = window.innerHeight;
-            canvas.width = W;
-            canvas.height = H;
-        }
-        window.addEventListener('resize', resizeCanvas);
-
-        // Ball animation
-        const primaryColors = ['#FF4136', '#0074D9', '#FFDC00']; // red, blue, yellow
-        function randomColor() {
-            return primaryColors[Math.floor(Math.random() * primaryColors.length)];
-        }
-        function randomBetween(a, b) {
-            return a + Math.random() * (b - a);
-        }
-        class Ball {
+        // Add cat animation code
+        const catEmoji = "🐱";
+        const cats = [];
+        
+        class Cat {
             constructor() {
-                this.r = randomBetween(18, 38);
-                this.x = randomBetween(this.r, W - this.r);
-                this.y = randomBetween(this.r, H - this.r);
-                this.dx = randomBetween(-2, 2);
-                this.dy = randomBetween(-2, 2);
-                this.color = randomColor();
-                this.alpha = randomBetween(0.5, 0.9);
+                this.element = document.createElement('div');
+                this.element.className = 'cat';
+                this.element.textContent = catEmoji;
+                this.element.style.fontSize = '40px';
+                this.x = Math.random() * window.innerWidth;
+                this.y = Math.random() * window.innerHeight;
+                this.speedX = (Math.random() - 0.5) * 4;
+                this.speedY = (Math.random() - 0.5) * 4;
+                this.rotation = 0;
+                this.element.style.left = this.x + 'px';
+                this.element.style.top = this.y + 'px';
+                document.body.appendChild(this.element);
             }
-            move() {
-                this.x += this.dx;
-                this.y += this.dy;
-                if (this.x < this.r || this.x > W - this.r) this.dx *= -1;
-                if (this.y < this.r || this.y > H - this.r) this.dy *= -1;
-            }
-            draw(ctx) {
-                ctx.save();
-                ctx.globalAlpha = this.alpha;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
-                ctx.fillStyle = this.color;
-                ctx.shadowColor = this.color;
-                ctx.shadowBlur = 16;
-                ctx.fill();
-                ctx.restore();
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.rotation += 2;
+
+                // Bounce off edges
+                if (this.x <= 0 || this.x >= window.innerWidth - 50) this.speedX *= -1;
+                if (this.y <= 0 || this.y >= window.innerHeight - 50) this.speedY *= -1;
+
+                this.element.style.left = this.x + 'px';
+                this.element.style.top = this.y + 'px';
+                this.element.style.transform = `rotate(${this.rotation}deg)`;
             }
         }
-        let balls = [];
-        for (let i = 0; i < 18; i++) balls.push(new Ball());
 
+        // Create initial cats
+        for (let i = 0; i < 10; i++) {
+            cats.push(new Cat());
+        }
+
+        // Update animation loop to include cats
         function animate() {
             ctx.clearRect(0, 0, W, H);
+            
+            // Update balls
             balls.forEach(ball => {
                 ball.move();
                 ball.draw(ctx);
             });
+
+            // Update cats
+            cats.forEach(cat => cat.update());
+            
             requestAnimationFrame(animate);
         }
-        animate();
 
-        // Add balls on click
-        canvas.addEventListener('click', e => {
-            for (let i = 0; i < 3; i++) balls.push(new Ball());
-        });
-
-        // Interactive "Hello World" text
-        const hello = document.getElementById('hello');
-        let isDragging = false, offsetX = 0, offsetY = 0;
-
-        hello.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            offsetX = e.clientX - hello.offsetLeft;
-            offsetY = e.clientY - hello.offsetTop;
-            hello.classList.add('active');
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                hello.style.left = (e.clientX - offsetX) + 'px';
-                hello.style.top = (e.clientY - offsetY) + 'px';
+        // Modify click handler to add cats too
+        hello.addEventListener('click', () => {
+            for (let i = 0; i < 3; i++) {
+                balls.push(new Ball());
+                cats.push(new Cat());
             }
         });
 
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
-            hello.classList.remove('active');
-        });
+        // Make hello text draggable
+        const hello = document.getElementById('hello');
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
 
-        // Animate text on hover/click
-        hello.addEventListener('mouseenter', () => hello.classList.add('active'));
-        hello.addEventListener('mouseleave', () => hello.classList.remove('active'));
-        hello.addEventListener('click', () => {
-            // Burst effect: add a bunch of balls
-            for (let i = 0; i < 8; i++) balls.push(new Ball());
-        });
+        hello.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+
+        function dragStart(e) {
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+            if (e.target === hello) {
+                isDragging = true;
+            }
+        }
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+                xOffset = currentX;
+                yOffset = currentY;
+                hello.style.transform = `translate(${currentX}px, ${currentY}px)`;
+            }
+        }
+
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+        }
+
+        // Start the animation
+        animate();
     </script>
 </body>
 </html>
